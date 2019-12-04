@@ -4,9 +4,7 @@ require 'json'
 require 'pry'
 
 
-
-run 
-
-
+new_cli = CLI.new 
+new_cli.run
 
 puts "HELLO WORLD"
