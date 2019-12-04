@@ -6,21 +6,13 @@ require 'colorized_string'
 PROMPT = TTY::Prompt.new
 
 @@user = nil
-@@concert_name = nil
 
-def self.user 
-    @@user 
-end 
-
-def self.user(input)
-    @@user = input 
-end 
-
+#runs the program
 def run
     welcome
 end
 
-#welcome
+#welcome is method that creates the funcrtionality of logging in or creating a new user and running the application
 def welcome
 
     puts"
@@ -56,7 +48,7 @@ puts "
 "
     new_user
     options
-    get_artist_events
+    
 end
 
 #Allows user to Sign up or Login
@@ -73,13 +65,16 @@ end
         end
     end
 
-#Helper method that asks User to sign up
+#Helper method that asks User to sign up with a username and creates a new user
     def signup
         username = PROMPT.ask("Please create a username:".colorize(:yellow), required: true)
         @@user = create_user(username)
         @@user.reload
     end
 
+    #helper method that takes in a username and checks to see if the username exists and if it does it tells you the 
+    #username is not available and redirects the user to create a new username
+    #if it does not exist it creates a new user with that username
     def create_user(username)
         existing_user = User.all.select do |user|
             user.name == username
@@ -94,7 +89,9 @@ end
         new_user
     end
 
-# User login
+#login checks to see if the username you're typing exists if it does, user is logged in
+#otherwise it tells you it was not found
+#then it redirects the user to login or signup screen 
 def login
     username = PROMPT.ask("Welcome Back!😄  What's your Username?🤔 " "🧐".colorize(:yellow), required: true)
         user = User.find_by(name: username)
@@ -106,6 +103,7 @@ def login
         end
 end
 
+#Just a menu of options that the user can choose from
 def options
      puts "\n"
     selection = PROMPT.select("Hello #{@@user.name}, What would you like to do?") do |option|
@@ -144,16 +142,35 @@ def options
     else
         sleep (1)
             puts "\n"
-            puts "Goodbye #{@@user.name}! " " 😄".colorize(:light_green)
+            puts "See you later #{@@user.name}! " " 😄".colorize(:light_green)
+
+        puts " ██████╗  ██████╗  ██████╗ ██████╗ ██████╗ ██╗   ██╗███████╗██╗       ██╗ 
+██╔════╝ ██╔═══██╗██╔═══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝██╔════╝██║    ██╗╚██╗
+██║  ███╗██║   ██║██║   ██║██║  ██║██████╔╝ ╚████╔╝ █████╗  ██║    ╚═╝ ██║
+██║   ██║██║   ██║██║   ██║██║  ██║██╔══██╗  ╚██╔╝  ██╔══╝  ╚═╝    ██╗ ██║
+╚██████╔╝╚██████╔╝╚██████╔╝██████╔╝██████╔╝   ██║   ███████╗██╗    ╚═╝██╔╝
+ ╚═════╝  ╚═════╝  ╚═════╝ ╚═════╝ ╚═════╝    ╚═╝   ╚══════╝╚═╝       ╚═╝ 
+                                                                          "
+
+
+
+
+
             exit
     end
 end 
 
+#takes in the user input to search for an artist
 def artist_prompt
     puts "Input your favorite artist:".colorize(:yellow)
     user_input = gets.chomp 
 end
 
+#takes in the users string as an argument and checks that in the API to get SongKicks artist id.
+#if the artist does not exist in the API, sends an error and redirects you to the main menu
+#it takes artist id to make an API call and returns a list of concerts on SongKick belonging to that artist
+#if Songkick has no concerts for that artist it returns an error and redirects to the main menu
+#uses this list of concerts to create an array of concert names
 def get_artist_events(artist)
     #get artist id
     artist_string = RestClient.get("https://api.songkick.com/api/3.0/search/artists.json?apikey=io09K9l3ebJxmxe2&query=#{artist}")
@@ -167,7 +184,7 @@ def get_artist_events(artist)
     end 
     artist_id = artist_hash["resultsPage"]["results"]["artist"][0]["id"]
 
-    #look at Songkick and find list of events in a timeframe we set with that particular artist
+    #API call to get the event hash from artist id
     events_string = RestClient.get("https://api.songkick.com/api/3.0/artists/#{artist_id}/calendar.json?apikey=io09K9l3ebJxmxe2
      ")
     events_hash = JSON.parse(events_string)
@@ -179,12 +196,15 @@ def get_artist_events(artist)
         go_back  
     end 
          
-    #map through and get array of display name for event
+    #map through and get array of display name for concert
     event_array = events_hash["resultsPage"]["results"]["event"].map do |event|
         event["displayName"]
     end 
 end
 
+#display a list of concerts for the artist you chose, allows the user to pick one
+#if the the concert has already been picked then it will give an error
+#and allow you to pick a new concert, if the concert hasnt been picked, it creates a new event object attached to that concert
 def choose_concert(event_list)
     puts "\n"
     selection = PROMPT.select("Choose your concert?".colorize(:light_green), event_list)
@@ -200,11 +220,18 @@ def choose_concert(event_list)
     end 
 end 
 
+#A menu of all the events the user has chosen in the form of strings
+#if the user has ne events they will get a message telling them they don't have any events
 def show_my_events
+    @@user.reload
      puts "\n"
-    puts "Here are your all your Events!".colorize(:light_green)
-    event_names.each do |event_name|
-        puts event_name
+     if @@user.events.length == 0 
+        puts "You have no events!".colorize(:red)
+     else
+        puts "Here are your all your Events!".colorize(:light_green)
+        event_names.each do |event_name|
+            puts event_name
+        end
     end 
     puts "\n"
     choice = PROMPT.select("Would you like to go back?".colorize(:light_green), ["yes"])
@@ -213,15 +240,7 @@ def show_my_events
     end
 end 
 
-
-
-
-def concert_names
-    @@user.reload.concerts.map do |concert|
-        concert.name
-    end 
-end
-
+#helper method that provides an array of event names in the form strings
 def event_names 
     @@user.reload
     @@user.events.map do |event|
@@ -229,21 +248,27 @@ def event_names
     end 
 end 
 
+#helper method that gives you a list of events to chose from 
+#uses the string to find the event and then stores it
 def select_event
     event_name = PROMPT.select("Which event are you looking for?".colorize(:red), event_names)
     Event.find_by(name: "#{event_name}")
 end
 
+#It's for us
 def destroy_all_users
     User.all.each do |user|
         user.destroy 
     end 
 end 
 
+#Is the method for the user to delete thier profile
 def delete_myself
     @@user.destroy
 end 
 
+#checks to see if the user has any events if they don't, you get a message telling you so.
+#if the user has any events if so, the user can delete them, one at a time.
 def delete_event
     puts "\n"
     if @@user.events.length == 0 
@@ -260,6 +285,9 @@ def delete_event
     go_back  
 end
 
+
+#Welcomes the user to their profile, promots them to see if they would like to change their username
+#if so, they can and it will be saved. if not they can be redirected to the main menu
 def update_username
     puts "\n"
     puts "Welcome to your profile #{@@user.name}!".colorize(:magenta)
@@ -275,9 +303,20 @@ def update_username
     end
 end
 
+#helper method that bring the user back to the menu, helps keep things DRY
 def go_back
     sleep(1)
     options
 end
+
+
+def self.user 
+    @@user 
+end 
+
+def self.user(input)
+    @@user = input 
+end 
+
 
 end 
