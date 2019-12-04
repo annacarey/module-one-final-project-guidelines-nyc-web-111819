@@ -22,6 +22,38 @@ end
 
 #welcome
 def welcome
+
+    puts"
+
+        _                                                 
+      ,´ `.                                               
+______|___|______________________________________________
+      |  /                       _..-´|                  
+      | /                  _..-´´_..-´|                  
+______|/__________________|_..-´´_____|__________|\______
+     ,|                   |           |          | \     
+    / |                   |           |          | ´     
+___/__|___________________|___________|__________|_______
+  / ,´| `.                |      ,d88b|          |       
+ | .  |   \            __ |      88888|       __ |       
+_|_|__|____|_________,d88b|______`Y88P'_____,d88b|_______
+ |  ` |    |         88888|                 88888|       
+ `.   |   /          `Y88P'                 `Y88P'       
+___`._|_.´_______________________________________________
+      |                                                  
+    , |                                                
+    '.´
+"
+    
+        
+puts "
+███╗   ███╗██╗   ██╗███████╗██╗ ██████╗    ███████╗ ██████╗ ██╗   ██╗██████╗  ██████╗███████╗
+████╗ ████║██║   ██║██╔════╝██║██╔════╝    ██╔════╝██╔═══██╗██║   ██║██╔══██╗██╔════╝██╔════╝
+██╔████╔██║██║   ██║███████╗██║██║         ███████╗██║   ██║██║   ██║██████╔╝██║     █████╗  
+██║╚██╔╝██║██║   ██║╚════██║██║██║         ╚════██║██║   ██║██║   ██║██╔══██╗██║     ██╔══╝  
+██║ ╚═╝ ██║╚██████╔╝███████║██║╚██████╗    ███████║╚██████╔╝╚██████╔╝██║  ██║╚██████╗███████╗
+╚═╝     ╚═╝ ╚═════╝ ╚══════╝╚═╝ ╚═════╝    ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚══════╝
+"
     new_user
     options
     get_artist_events
@@ -45,6 +77,7 @@ end
     def signup
         username = PROMPT.ask("Please create a username:".colorize(:yellow), required: true)
         @@user = create_user(username)
+        @@user.reload
     end
 
     def create_user(username)
@@ -55,9 +88,10 @@ end
             puts "That username is not available."
             signup
         else 
-            User.create(name: "#{username}")
+            new_user = User.create(name: "#{username}")
             puts "You just created a new account!"
         end
+        new_user
     end
 
 # User login
@@ -72,7 +106,8 @@ def login
         end
 end
 
-def options 
+def options
+     puts "\n"
     selection = PROMPT.select("Hello #{@@user.name}, What would you like to do?") do |option|
         option.choice "Find an event by Artist".colorize(:yellow), 1
         option.choice "Show my Events".colorize(:light_blue), 2
@@ -107,7 +142,8 @@ def options
 
     else
         sleep (1)
-            puts "Goodbye! " " 😄".colorize(:light_green)
+            puts "\n"
+            puts "Goodbye #{@@user.name}! " " 😄".colorize(:light_green)
             exit
     end
 end 
@@ -147,22 +183,28 @@ def get_artist_events(artist)
 end
 
 def choose_concert(event_list)
+    puts "\n"
     selection = PROMPT.select("Choose your concert?".colorize(:light_green), event_list)
     new_concert = Concert.create(name: "#{selection}")
     new_event = Event.create(user_id: "#{@@user.id}", concert_id: "#{new_concert.id}", name: "#{selection}")
     puts "You just saved an event!".colorize(:light_blue)
 end 
 
-def show_my_events 
+def show_my_events
+     puts "\n"
     puts "Here are your all your Events!".colorize(:light_green)
     event_names.each do |event_name|
         puts event_name
     end 
+    puts "\n"
     choice = PROMPT.select("Would you like to go back?".colorize(:light_green), ["yes"])
     if choice == "yes"
         go_back
     end
 end 
+
+
+
 
 def concert_names
     @@user.reload.concerts.map do |concert|
@@ -193,6 +235,7 @@ def delete_myself
 end 
 
 def delete_event
+    puts "\n"
     if @@user.events.length == 0 
         puts "#{@@user.name} has no events!"
         PROMPT.select("Would you like to go back?", ["yes"])
@@ -208,6 +251,7 @@ def delete_event
 end
 
 def update_username
+    puts "\n"
     puts "Welcome to your profile #{@@user.name}!".colorize(:magenta)
     var = PROMPT.select("Would you like to change your Username?".colorize(:magenta), ["yes"], ["no"])
     if var == "yes"
@@ -216,11 +260,9 @@ def update_username
         @@user.update(name: "#{input}")
     elsif
         var == "no"
-        puts "Alright!"
+        puts "Alright!".colorize(:magenta)
         go_back
-    end
-   # PROMPT.yes?("Would you like to go back?".colorize(:red))
-   # go_back  
+    end  
 end
 
 def go_back
