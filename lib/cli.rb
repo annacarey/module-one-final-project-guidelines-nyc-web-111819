@@ -85,6 +85,7 @@ def options
         artist = artist_prompt
         event_list = get_artist_events(artist)
         choose_concert(event_list)
+        puts "You just saved an event!".colorize(:light_blue)
         go_back
     elsif 
         selection == 2
@@ -125,7 +126,8 @@ def get_artist_events(artist)
      #check if the api could not find an artist by name
     if artist_hash["resultsPage"]["results"] == {} 
         puts "Sorry this artist name is not in our system.".colorize(:red)
-        options 
+        PROMPT.select("Would you like to go back?", ["yes"])
+        go_back  
     end 
     artist_id = artist_hash["resultsPage"]["results"]["artist"][0]["id"]
 
@@ -137,7 +139,8 @@ def get_artist_events(artist)
     #check if the API could not return results for the artist
     if events_hash["resultsPage"]["results"] == {} 
         puts "Sorry, your artist is not on tour!".colorize(:red)
-        options 
+        PROMPT.select("Would you like to go back?", ["yes"])
+        go_back  
     end 
          
     #map through and get array of display name for event
@@ -148,9 +151,16 @@ end
 
 def choose_concert(event_list)
     selection = PROMPT.select("Choose your concert?".colorize(:light_green), event_list)
-    new_concert = Concert.create(name: "#{selection}")
-    new_event = Event.create(user_id: "#{@@user.id}", concert_id: "#{new_concert.id}", name: "#{selection}")
-    puts "You just saved an event!".colorize(:light_blue)
+    existing_concert = @@user.concerts.all.select do |concert|
+        concert.name == selection
+    end 
+    if existing_concert != []
+        puts "You have already added that concert!".colorize(:red)
+        choose_concert(event_list)
+    else 
+        new_concert = Concert.create(name: "#{selection}")
+        new_event = Event.create(user_id: "#{@@user.id}", concert_id: "#{new_concert.id}", name: "#{selection}")
+    end 
 end 
 
 def show_my_events 
@@ -219,8 +229,6 @@ def update_username
         puts "Alright!"
         go_back
     end
-   # PROMPT.yes?("Would you like to go back?".colorize(:red))
-   # go_back  
 end
 
 def go_back
