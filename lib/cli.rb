@@ -111,9 +111,9 @@ end
 
 # Just a menu of options that the user can choose from
 def options
-     puts "\n"
-     #fix stop music error
-     stop_music
+    puts "\n"
+    #fix stop music error
+    stop_music
     selection = PROMPT.select("Hello #{@@user.name}, What Would You Like To Do?") do |option|
         option.choice "Find An Event By Artist 🔍".colorize(:yellow), 1   
         option.choice "Show My Events 🎊".colorize(:light_blue), 2
@@ -185,7 +185,6 @@ def get_artist_event_hash(artist)
     #get artist id
     artist_string = RestClient.get("https://api.songkick.com/api/3.0/search/artists.json?apikey=io09K9l3ebJxmxe2&query=#{artist}")
     artist_hash = JSON.parse(artist_string)
-
      #check if the api could not find an artist by name
     if artist_hash["resultsPage"]["results"] == {} 
         puts "Sorry this artist name is not in our system.".colorize(:red)
@@ -193,26 +192,37 @@ def get_artist_event_hash(artist)
         go_back  
     end 
     artist_id = artist_hash["resultsPage"]["results"]["artist"][0]["id"]
-# Takes in the Users string(artist's name) as an argument and checks that in the API to get SongKicks Artist_ID
-# if the artist does not exist in the API, it sends an error message and redirects you to the main menu
-# it takes an Artist_ID to make an API call and returns a list of concerts on SongKick's database belonging to that artist
-# if Songkick has no concerts for that artist it returns an error message and redirects to the main menu
-# uses this list of concerts to create an array of concert names
-
-# Get Artist_ID
-def get_artist_id(user_input)
-    artist_string = RestClient.get("https://api.songkick.com/api/3.0/search/artists.json?apikey=io09K9l3ebJxmxe2&query=#{user_input}")
-    JSON.parse(artist_string)
-end 
-
+    #look at Songkick and find list of events in a timeframe we set with that particular artist
+    events_string = RestClient.get("https://api.songkick.com/api/3.0/artists/#{artist_id}/calendar.json?apikey=io09K9l3ebJxmxe2
+     ")
+    events_hash = JSON.parse(events_string)
     #check if the API could not return results for the artist
     if events_hash["resultsPage"]["results"] == {} 
         puts "Sorry, your artist is not on tour!".colorize(:red)
         PROMPT.select("Would you like to go back?", ["yes"])
         go_back  
     end 
+
+    # #map through and get array of display name for event
+    # event_array = events_hash["resultsPage"]["results"]["event"].map do |event|
+    # end 
     events_hash["resultsPage"]["results"]["event"]
 end
+
+# # Get Artist_ID
+# def get_artist_id(user_input)
+#     artist_string = RestClient.get("https://api.songkick.com/api/3.0/search/artists.json?apikey=io09K9l3ebJxmxe2&query=#{user_input}")
+#     JSON.parse(artist_string)
+# end 
+
+#     #check if the API could not return results for the artist
+#     if events_hash["resultsPage"]["results"] == {} 
+#         puts "Sorry, your artist is not on tour!".colorize(:red)
+#         PROMPT.select("Would you like to go back?", ["yes"])
+#         go_back  
+#     end 
+#     events_hash["resultsPage"]["results"]["event"]
+# end
 
 def get_event_list(events_hash)
     events_hash.map do |event|
@@ -232,7 +242,6 @@ end
 # and allow you to go back and pick a new concert 
 # if the concert hasnt been picked, it creates a new event object/instance attached to that concert
 def choose_concert(event_list)
-    #puts "\n"
     selection = PROMPT.select("Choose Your Concert?".colorize(:light_green), event_list)
     existing_concert = @@user.concerts.all.select do |concert|
         concert.name == selection
@@ -243,7 +252,6 @@ def choose_concert(event_list)
     else 
         selection 
     end 
-    # binding.pry
 end 
 
 def get_event_hash_from_selection(events_array, concert_choice)
@@ -260,7 +268,6 @@ def create_new_event(concert_choice, event_hash)
     city = event_hash["venue"]["metroArea"]["displayName"]
     venue = event_hash["venue"]["displayName"]
     new_event = Event.create(user_id: "#{@@user.id}", concert_id: "#{new_concert.id}", name: "#{concert_choice}", url: "#{url}", date: "#{date}", city: "#{city}", venue: "#{venue}")
-    binding.pry
 end 
 
 def show_my_events
