@@ -48,6 +48,7 @@ puts "
 ╚═╝     ╚═╝ ╚═════╝ ╚══════╝╚═╝ ╚═════╝    ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚══════╝
 "
     new_user
+     stop_music
     options
     
 end
@@ -111,7 +112,6 @@ end
 
 # Just a menu of options that the user can choose from
 def options
-    stop_music
     puts "\n"
     selection = PROMPT.select("Hello #{@@user.name}, What Would You Like To Do?") do |option|
         option.choice "Find An Event By Artist 🔍".colorize(:yellow), 1   
@@ -249,10 +249,12 @@ def choose_concert(event_list)
     end 
     if existing_concert != []
         puts "You Have Already Added That Concert!".colorize(:red)
+        puts "\n"
         choose_concert(event_list)
     else 
         selection 
     end 
+   
 end 
 
 def get_event_hash_from_selection(events_array, concert_choice)
@@ -272,14 +274,14 @@ def create_new_event(concert_choice, event_hash)
 end 
 
 def show_my_events
+    @@user.reload
     puts "\n"
-    # if @@user.events.length == 0 
-    #     puts "You have no saved events!".colorize(:red)
-    #     choice = PROMPT.select("Would You Like To Go Back?".colorize(:light_green), ["Yes"])
-    #     if choice == "Yes"
-    #         go_back
-    #     end
-    # else 
+    if @@user.events.length == 0 
+        puts "You have no events!".colorize(:red)
+        puts "\n"
+        PROMPT.select("Would You Like To Go Back?", ["Yes"])
+        go_back  
+    else 
         selection = PROMPT.select("Here are your all your Events! Select the event for more info.".colorize(:light_green), event_names)
         selected_event = @@user.events.find_by(name: ("#{selection}"))
         puts "\n"
@@ -301,7 +303,7 @@ def show_my_events
         if choice == "Yes"
             go_back
         end
-    # end 
+    end 
 end 
 
 def concert_names
@@ -345,6 +347,7 @@ def delete_event
     puts "\n"
     if @@user.events.length == 0 
         puts "#{@@user.name} Has No Events!".colorize(:red)
+        puts "\n"
         PROMPT.select("Would You Like To Go Back?", ["Yes"])
         go_back  
     end
@@ -355,6 +358,7 @@ def delete_event
     end
     @@user.reload
     puts "Event(s) Succesfully Deleted!".colorize(:red)
+    puts "\n"
     PROMPT.select("Would You Like To Go Back?", ["Yes"])
     go_back  
 end
@@ -384,15 +388,20 @@ def go_back
     options
 end
 
-# Plays music 
+#Plays music 
 def music
-  pid = fork{ exec 'afplay',"/Users/seaneriksen/Development/code/module-one-final-project-guidelines-nyc-web-111819/lib/music/Kanye_West_feat._Rihanna_Kid_Cudi_Fergie_Alicia_Keys_Elton_John_John_Legend_The-D_-_All_(mp3.pm) (1).mp3" }  
+        fork{ exec 'killall', "afplay" }
+        sleep(0.5)
+        fork{ exec 'afplay', "/Users/seaneriksen/Development/code/module-one-final-project-guidelines-nyc-web-111819/lib/music/Kanye_West_feat._Rihanna_Kid_Cudi_Fergie_Alicia_Keys_Elton_John_John_Legend_The-D_-_All_(mp3.pm) (1).mp3" }
 end
+    
 
-# Stops the music
-def stop_music
-    pid = fork{ exec 'killall', "afplay" }
-end
+
+ #Stops the music
+ def stop_music
+     fork{ exec 'killall', "afplay" }
+     sleep(1)
+ end
 
 
 
