@@ -116,8 +116,11 @@ def options
     end 
     if selection == 1 
         artist = artist_prompt
-        event_list = get_artist_events(artist)
-        choose_concert(event_list)
+        events_array = get_artist_event_hash(artist)
+        event_list = get_event_list(events_array)
+        concert_choice = choose_concert(event_list)
+        event_hash = get_event_hash_from_selection(events_array, concert_choice)
+        create_new_event(concert_choice, event_hash)
         puts "You just saved an event!".colorize(:light_blue)
         go_back
     elsif 
@@ -166,12 +169,7 @@ def artist_prompt
     user_input = gets.chomp 
 end
 
-#takes in the users string as an argument and checks that in the API to get SongKicks artist id.
-#if the artist does not exist in the API, sends an error and redirects you to the main menu
-#it takes artist id to make an API call and returns a list of concerts on SongKick belonging to that artist
-#if Songkick has no concerts for that artist it returns an error and redirects to the main menu
-#uses this list of concerts to create an array of concert names
-def get_artist_events(artist)
+def get_artist_event_hash(artist)
     #get artist id
     artist_string = RestClient.get("https://api.songkick.com/api/3.0/search/artists.json?apikey=io09K9l3ebJxmxe2&query=#{artist}")
     artist_hash = JSON.parse(artist_string)
@@ -195,16 +193,23 @@ def get_artist_events(artist)
         PROMPT.select("Would you like to go back?", ["yes"])
         go_back  
     end 
-         
-    #map through and get array of display name for concert
-    event_array = events_hash["resultsPage"]["results"]["event"].map do |event|
-        event["displayName"]
-    end 
+    events_hash["resultsPage"]["results"]["event"]
 end
 
-#display a list of concerts for the artist you chose, allows the user to pick one
-#if the the concert has already been picked then it will give an error
-#and allow you to pick a new concert, if the concert hasnt been picked, it creates a new event object attached to that concert
+def get_event_list(events_hash)
+    events_hash.map do |event|
+        event["displayName"]
+    end
+end 
+
+#map through and get array of display name for event
+def get_event_name_list(event_hash)
+event_array = events_hash["resultsPage"]["results"]["event"].map do |event|
+    event["displayName"]
+end
+end 
+
+#needs to return a string of the user's choosing
 def choose_concert(event_list)
     puts "\n"
     selection = PROMPT.select("Choose your concert?".colorize(:light_green), event_list)
@@ -215,24 +220,46 @@ def choose_concert(event_list)
         puts "You have already added that concert!".colorize(:red)
         choose_concert(event_list)
     else 
-        new_concert = Concert.create(name: "#{selection}")
-        new_event = Event.create(user_id: "#{@@user.id}", concert_id: "#{new_concert.id}", name: "#{selection}")
+        selection 
+    end 
+    # binding.pry
+end 
+
+def get_event_hash_from_selection(events_array, concert_choice)
+    events_array.find do |event|
+        event["displayName"] == concert_choice 
     end 
 end 
 
-#A menu of all the events the user has chosen in the form of strings
-#if the user has ne events they will get a message telling them they don't have any events
+#create a new event using all of the variables 
+def create_new_event(concert_choice, event_hash)
+    new_concert = Concert.create(name: "#{concert_choice}")
+    url = event_hash["uri"]
+    date = event_hash["start"]["date"]
+    city = event_hash["venue"]["metroArea"]["displayName"]
+    venue = event_hash["venue"]["displayName"]
+    new_event = Event.create(user_id: "#{@@user.id}", concert_id: "#{new_concert.id}", name: "#{concert_choice}", url: "#{url}", date: "#{date}", city: "#{city}", venue: "#{venue}")
+    binding.pry
+end 
+
 def show_my_events
-    @@user.reload
-     puts "\n"
-     if @@user.events.length == 0 
-        puts "You have no events!".colorize(:red)
-     else
-        puts "Here are your all your Events!".colorize(:light_green)
-        event_names.each do |event_name|
-            puts event_name
-        end
+    puts "\n"
+    selection = PROMPT.select("Here are your all your Events! Select the event for more info.".colorize(:light_green), event_names)
+    selected_event = @@user.events.find_by(name: ("#{selection}"))
+    puts "\n"
+    puts selected_event.name.colorize(:magenta)
+    if selected_event.date
+        puts "Date: ".colorize(:magenta) + selected_event.date
     end 
+    if selected_event.city
+        puts "City: ".colorize(:magenta) + selected_event.city
+    end 
+    if selected_event.venue
+        puts "Venue: ".colorize(:magenta) + selected_event.venue
+    end 
+    if selected_event.url
+        puts "Event Link: ".colorize(:magenta) + selected_event.url
+    end  
     puts "\n"
     choice = PROMPT.select("Would you like to go back?".colorize(:light_green), ["yes"])
     if choice == "yes"
@@ -240,7 +267,12 @@ def show_my_events
     end
 end 
 
-#helper method that provides an array of event names in the form strings
+def concert_names
+    @@user.reload.concerts.map do |concert|
+        concert.name
+    end 
+end
+
 def event_names 
     @@user.reload
     @@user.events.map do |event|

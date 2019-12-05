@@ -22,6 +22,10 @@ ActiveRecord::Schema.define(version: 2019_12_03_221721) do
     t.integer "user_id"
     t.integer "concert_id"
     t.string "name"
+    t.string "url"
+    t.string "date"
+    t.string "city"
+    t.string "venue"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
