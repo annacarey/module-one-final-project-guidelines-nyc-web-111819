@@ -111,9 +111,8 @@ end
 
 # Just a menu of options that the user can choose from
 def options
-    puts "\n"
-    #fix stop music error
     stop_music
+    puts "\n"
     selection = PROMPT.select("Hello #{@@user.name}, What Would You Like To Do?") do |option|
         option.choice "Find An Event By Artist 🔍".colorize(:yellow), 1   
         option.choice "Show My Events 🎊".colorize(:light_blue), 2
@@ -183,6 +182,8 @@ end
 
 def get_artist_event_hash(artist)
     #get artist id
+    # get_user_id(artist_prompt)
+    
     artist_string = RestClient.get("https://api.songkick.com/api/3.0/search/artists.json?apikey=io09K9l3ebJxmxe2&query=#{artist}")
     artist_hash = JSON.parse(artist_string)
      #check if the api could not find an artist by name
@@ -272,27 +273,35 @@ end
 
 def show_my_events
     puts "\n"
-    selection = PROMPT.select("Here are your all your Events! Select the event for more info.".colorize(:light_green), event_names)
-    selected_event = @@user.events.find_by(name: ("#{selection}"))
-    puts "\n"
-    puts selected_event.name.colorize(:magenta)
-    if selected_event.date
-        puts "Date: ".colorize(:magenta) + selected_event.date
-    end 
-    if selected_event.city
-        puts "City: ".colorize(:magenta) + selected_event.city
-    end 
-    if selected_event.venue
-        puts "Venue: ".colorize(:magenta) + selected_event.venue
-    end 
-    if selected_event.url
-        puts "Event Link: ".colorize(:magenta) + selected_event.url
-    end  
-    puts "\n"
-    choice = PROMPT.select("Would You Like To Go Back?".colorize(:light_green), ["Yes"])
-    if choice == "Yes"
-        go_back
-    end
+    # if @@user.events.length == 0 
+    #     puts "You have no saved events!".colorize(:red)
+    #     choice = PROMPT.select("Would You Like To Go Back?".colorize(:light_green), ["Yes"])
+    #     if choice == "Yes"
+    #         go_back
+    #     end
+    # else 
+        selection = PROMPT.select("Here are your all your Events! Select the event for more info.".colorize(:light_green), event_names)
+        selected_event = @@user.events.find_by(name: ("#{selection}"))
+        puts "\n"
+        puts selected_event.name.colorize(:magenta)
+        if selected_event.date
+            puts "Date: ".colorize(:magenta) + selected_event.date
+        end 
+        if selected_event.city
+            puts "City: ".colorize(:magenta) + selected_event.city
+        end 
+        if selected_event.venue
+            puts "Venue: ".colorize(:magenta) + selected_event.venue
+        end 
+        if selected_event.url
+            puts "Event Link: ".colorize(:magenta) + selected_event.url
+        end  
+        puts "\n"
+        choice = PROMPT.select("Would You Like To Go Back?".colorize(:light_green), ["Yes"])
+        if choice == "Yes"
+            go_back
+        end
+    # end 
 end 
 
 def concert_names
