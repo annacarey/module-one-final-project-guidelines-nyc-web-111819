@@ -243,7 +243,7 @@ def choose_concert(event_list)
     else 
         selection 
     end 
-    # binding.pry
+   
 end 
 
 def get_event_hash_from_selection(events_array, concert_choice)
