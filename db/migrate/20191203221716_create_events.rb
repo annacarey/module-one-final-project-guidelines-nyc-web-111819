@@ -4,6 +4,10 @@ class CreateEvents < ActiveRecord::Migration[6.0]
       t.integer :user_id
       t.integer :concert_id
       t.string :name
+      t.string :url
+      t.string :date
+      t.string :city
+      t.string :venue
       t.timestamps  
    end
   end
