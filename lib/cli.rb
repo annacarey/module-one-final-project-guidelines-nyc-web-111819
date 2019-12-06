@@ -129,7 +129,7 @@ def options
         concert_choice = choose_concert(event_list)
         event_hash = get_event_hash_from_selection(events_array, concert_choice)
         create_new_event(concert_choice, event_hash)
-        puts "You just saved an event!".colorize(:light_blue)
+        puts "You Just Saved An Event!".colorize(:light_blue)
         go_back
     elsif 
         selection == 2
@@ -143,8 +143,13 @@ def options
         go_back
     elsif 
         selection == 4 
-        delete_myself 
+        delete_myself
+        puts "Account Was Successfully Deleted!".colorize(:red)
+        puts "\n"
+        puts "Farewell!".colorize(:red)
+        puts "\n" 
         new_user
+        go_back
     elsif
         selection == 5
         update_username
@@ -184,46 +189,29 @@ def get_artist_event_hash(artist)
     #get artist id
     # get_user_id(artist_prompt)
     
-    artist_string = RestClient.get("https://api.songkick.com/api/3.0/search/artists.json?apikey=io09K9l3ebJxmxe2&query=#{artist}")
+    artist_string = RestClient.get("https://api.songkick.com/api/3.0/search/artists.json?apikey=38WZ6KgVp1vlNFrz&query=#{artist}")
     artist_hash = JSON.parse(artist_string)
      #check if the api could not find an artist by name
     if artist_hash["resultsPage"]["results"] == {} 
-        puts "Sorry this artist name is not in our system.".colorize(:red)
-        PROMPT.select("Would you like to go back?", ["yes"])
+        puts "Sorry This Artist Name Is Not In Our System!".colorize(:red)
+        PROMPT.select("Would You Like To Go Back?", ["Yes"])
         go_back  
     end 
     artist_id = artist_hash["resultsPage"]["results"]["artist"][0]["id"]
     #look at Songkick and find list of events in a timeframe we set with that particular artist
-    events_string = RestClient.get("https://api.songkick.com/api/3.0/artists/#{artist_id}/calendar.json?apikey=io09K9l3ebJxmxe2
+    events_string = RestClient.get("https://api.songkick.com/api/3.0/artists/#{artist_id}/calendar.json?apikey=38WZ6KgVp1vlNFrz
      ")
     events_hash = JSON.parse(events_string)
     #check if the API could not return results for the artist
     if events_hash["resultsPage"]["results"] == {} 
-        puts "Sorry, your artist is not on tour!".colorize(:red)
-        PROMPT.select("Would you like to go back?", ["yes"])
+        puts "Sorry, Your Artist Is Not On Tour!".colorize(:red)
+        PROMPT.select("Would You Like To Go Back?", ["Yes"])
         go_back  
     end 
 
-    # #map through and get array of display name for event
-    # event_array = events_hash["resultsPage"]["results"]["event"].map do |event|
-    # end 
     events_hash["resultsPage"]["results"]["event"]
 end
 
-# # Get Artist_ID
-# def get_artist_id(user_input)
-#     artist_string = RestClient.get("https://api.songkick.com/api/3.0/search/artists.json?apikey=io09K9l3ebJxmxe2&query=#{user_input}")
-#     JSON.parse(artist_string)
-# end 
-
-#     #check if the API could not return results for the artist
-#     if events_hash["resultsPage"]["results"] == {} 
-#         puts "Sorry, your artist is not on tour!".colorize(:red)
-#         PROMPT.select("Would you like to go back?", ["yes"])
-#         go_back  
-#     end 
-#     events_hash["resultsPage"]["results"]["event"]
-# end
 
 def get_event_list(events_hash)
     events_hash.map do |event|
@@ -277,12 +265,12 @@ def show_my_events
     @@user.reload
     puts "\n"
     if @@user.events.length == 0 
-        puts "You have no events!".colorize(:red)
+        puts "You Have No Events!".colorize(:red)
         puts "\n"
         PROMPT.select("Would You Like To Go Back?", ["Yes"])
         go_back  
     else 
-        selection = PROMPT.select("Here are your all your Events! Select the event for more info.".colorize(:light_green), event_names)
+        selection = PROMPT.select("Here Are Your All Your Events! Select The Event For More Info.".colorize(:light_green), event_names)
         selected_event = @@user.events.find_by(name: ("#{selection}"))
         puts "\n"
         puts selected_event.name.colorize(:magenta)
@@ -346,12 +334,12 @@ end
 def delete_event
     puts "\n"
     if @@user.events.length == 0 
-        puts "#{@@user.name} Has No Events!".colorize(:red)
+        puts "You Have No Events!".colorize(:red)
         puts "\n"
         PROMPT.select("Would You Like To Go Back?", ["Yes"])
         go_back  
     end
-    puts "Here Are #{@@user.name}'s Events!".colorize(:light_green)
+    puts "Here Are Your Events!".colorize(:light_green)
     my_events = select_events
     my_events.each do |event|
         event.destroy
