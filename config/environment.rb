@@ -1,6 +1,7 @@
 require 'bundler'
 require 'sqlite3'
 require "sinatra/activerecord"
+require 'watir'
 Bundler.require
 
 

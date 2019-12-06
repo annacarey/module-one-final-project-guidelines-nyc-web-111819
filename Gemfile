@@ -9,3 +9,4 @@ gem "rake"
 gem "rest-client"
 gem 'tty-prompt'
 gem 'colorize'
+gem 'watir'

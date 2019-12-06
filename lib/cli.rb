@@ -156,6 +156,8 @@ def options
         go_back
     elsif
         selection == 6
+        puts "You Successfully Logged Out!".colorize(:red)
+        puts "\n"
         logout
         go_back
     else
@@ -270,8 +272,12 @@ def show_my_events
         PROMPT.select("Would You Like To Go Back?", ["Yes"])
         go_back  
     else 
-        selection = PROMPT.select("Here Are Your All Your Events! Select The Event For More Info.".colorize(:light_green), event_names)
-        selected_event = @@user.events.find_by(name: ("#{selection}"))
+        selection = PROMPT.select("Here Are All Your Events! Select The Event For More Info.".colorize(:light_green), event_names, ["Main Menu"])
+        if event_names.include?(selection)
+            selected_event = @@user.events.find_by(name: ("#{selection}"))
+        elsif selection == "Main Menu"
+            go_back
+        end 
         puts "\n"
         puts selected_event.name.colorize(:magenta)
         if selected_event.date
@@ -284,13 +290,16 @@ def show_my_events
             puts "Venue: ".colorize(:magenta) + selected_event.venue
         end 
         if selected_event.url
-            puts "Event Link: ".colorize(:magenta) + selected_event.url
+            link_selection = PROMPT.select("Buy Tickets".colorize(:blue), ["Open Link"], ["Go Back"])
+            if link_selection == "Open Link" 
+                browser = Watir::Browser.new
+                browser.goto("#{selected_event.url}")
+            elsif
+                link_selection == "Go Back"
+                show_my_events
+            end 
         end  
         puts "\n"
-        choice = PROMPT.select("Would You Like To Go Back?".colorize(:light_green), ["Yes"])
-        if choice == "Yes"
-            go_back
-        end
     end 
 end 
 
