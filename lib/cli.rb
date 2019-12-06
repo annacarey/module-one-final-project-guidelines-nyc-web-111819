@@ -70,24 +70,31 @@ end
 # Helper method that asks the User to sign up with a username and creates a new user instance
     def signup
         username = PROMPT.ask("Please Create A Username:".colorize(:yellow), required: true)
-        @@user = create_user(username)
-        @@user.reload
-    end
-
-    # Helper method that takes in a username and checks to see if the username exists and if it does it tells you the 
-    # username is not available and redirects the user to create a new username
-    # if it does not exist it creates a new user with that username
-    def create_user(username)
         existing_user = User.all.select do |user|
             user.name == username
         end 
         if existing_user != []
             puts "Sorry, That Username Is Not Available!  😅".colorize(:red)
             signup
-        else 
-            new_user = User.create(name: "#{username}")
-            puts "Congrats, You Just Created A New Account!  🥳"
         end
+        password = PROMPT.mask("Please Create A Password:".colorize(:yellow), required: true)
+        bio = PROMPT.ask("#{username}, Tell Us About Yourself:".colorize(:yellow), required: true)
+        @@user = create_user(username, password, bio)
+        @@user.reload
+        options
+    end
+
+    # Helper method that takes in a username and checks to see if the username exists and if it does it tells you the 
+    # username is not available and redirects the user to create a new username
+    # if it does not exist it creates a new user with that username
+    def create_user(username, password, bio)
+        
+        # if existing_user != []
+        #     puts "Sorry, That Username Is Not Available!  😅".colorize(:red)
+            
+        # else 
+        new_user = User.create(name: "#{username}", password: "#{password}", bio: "#{bio}")
+        puts "Congrats, You Just Created A New Account!  🥳"
         new_user
     end
 
@@ -96,15 +103,29 @@ end
 # then it redirects the User to the login/signup screen 
 def login
     username = PROMPT.ask("Welcome Back!😄  What's Your Username?🤔 " "🧐".colorize(:yellow), required: true)
-        user = User.find_by(name: username)
-        if user 
+    user = User.find_by(name: username)
+    if user 
             @@user = user
         else
             PROMPT.error("Sorry Username Not Found! 🤬 🤬")
             puts "\n"
             new_user
         end
+    check_password(@@user)
 end
+
+def check_password(user)
+    password = PROMPT.mask("What's Your Password?".colorize(:yellow))
+    if user.password != password
+        PROMPT.error("Password Incorect! 🤬 🤬")
+        try_again = PROMPT.select("Try Again?", ["Yes"], ["No"])
+        if try_again == "Yes"
+            check_password(user)
+        elsif try_again == "No"
+            new_user
+        end 
+    end 
+end 
 
 def logout
     new_user
@@ -152,8 +173,7 @@ def options
         go_back
     elsif
         selection == 5
-        update_username
-        go_back
+        manage_profile
     elsif
         selection == 6
         puts "You Successfully Logged Out!".colorize(:red)
@@ -223,9 +243,9 @@ end
 
 #map through and get array of display name for event
 def get_event_name_list(event_hash)
-event_array = events_hash["resultsPage"]["results"]["event"].map do |event|
-    event["displayName"]
-end
+    event_array = events_hash["resultsPage"]["results"]["event"].map do |event|
+        event["displayName"]
+    end
 end 
 
 # Displays a list of concerts for the artist you chose, allows the User to pick one
@@ -244,7 +264,6 @@ def choose_concert(event_list)
     else 
         selection 
     end 
-   
 end 
 
 def get_event_hash_from_selection(events_array, concert_choice)
@@ -364,20 +383,56 @@ end
 
 # Welcomes the User to their profile, prompts them to see if they would like to change their username
 # if so, they can and it will be saved. If not they can be redirected to the main menu
-def update_username
+def manage_profile
     puts "\n"
-    puts "Welcome To Your Profile #{@@user.name}!".colorize(:magenta)
-    var = PROMPT.select("Would You Like To Change Your Username?".colorize(:magenta), ["Yes"], ["No"])
-    if var == "Yes"
-        puts "What Would You Like Your New Username To Be?".colorize(:magenta)
-        input = gets.chomp
-        @@user.update(name: "#{input}")
+    var = PROMPT.select("Welcome To Your Profile #{@@user.name}!".colorize(:magenta), ["View Profile"], ["Change Username"], ["Change Password"], ["Edit Bio"], ["Main Menu"])
+    if var == "View Profile"
+        puts @@user.name
+        puts @@user.bio 
+        puts "\n"
+        selection = PROMPT.select("Go Back?".colorize(:light_green), ["Yes"])
+        if selection == "Yes"
+            manage_profile
+        end 
+    elsif var == "Change Username"
+        username = PROMPT.ask("What Would You Like Your New Username To Be?".colorize(:magenta))
+        @@user.update(name: "#{username}")
+        puts "\n"
+        puts ("Username Successfully Changed To #{username}").colorize(:red)
+        manage_profile
     elsif
-        var == "No"
-        puts "Alright!".colorize(:magenta)
+        var == "Change Password"
+        password = PROMPT.mask("What Would You Like Your New Password To Be?".colorize(:magenta), required: true)
+        @@user.update(password: "#{password}")
+        puts "\n"
+        puts ("Password Successfully Changed.").colorize(:red)
+        manage_profile
+    elsif 
+        var == "Edit Bio"
+        bio = PROMPT.ask("Edit Bio: ".colorize(:magenta), required: true)
+        @@user.update(bio: "#{bio}")
+        puts "\n"
+        puts ("Bio Successfully Changed.").colorize(:red)
+        manage_profile
+    elsif var == "Main Menu"
         go_back
-    end
+    end 
 end
+
+# def update_password
+#     puts "\n"
+#     puts "Welcome To Your Profile #{@@user.name}!".colorize(:magenta)
+#     var = PROMPT.select("Would You Like To Change Your Password?".colorize(:magenta), ["Yes"], ["No"])
+#     if var == "Yes"
+#         PROMPT.mask("What Would You Like Your New Password To Be?".colorize(:magenta), required: true)
+#         input = gets.chomp
+#         @@user.update(password: "#{input}")
+#     elsif
+#         var == "No"
+#         puts "Alright!".colorize(:magenta)
+#         go_back
+#     end
+# end
 
 # Helper method that brings the User back to the main menu, helps keep things DRY!!
 def go_back
@@ -391,8 +446,6 @@ def music
         sleep(0.5)
         fork{ exec 'afplay', "/Users/seaneriksen/Development/code/module-one-final-project-guidelines-nyc-web-111819/lib/music/Kanye_West_feat._Rihanna_Kid_Cudi_Fergie_Alicia_Keys_Elton_John_John_Legend_The-D_-_All_(mp3.pm) (1).mp3" }
 end
-    
-
 
  #Stops the music
  def stop_music
@@ -400,19 +453,14 @@ end
      sleep(1)
  end
 
-
-
 # NO IDEA WHAT THIS IS/DOES
 def self.user 
     @@user 
 end 
-
-
 
 # NO IDEA WHAT THIS IS/DOES
 def self.user(input)
     @@user = input 
 end 
 
-
-end 
+end
